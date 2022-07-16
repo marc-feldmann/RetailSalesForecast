@@ -22,7 +22,7 @@ import graphviz
 # Nur jetzt schon bzw. überhaupt in Optimierung gehen, wenn XGBoost den rule-of-thumb forecast (proxy für human store manager forecast) nicht knackt.
 # 2) Optimize (if at all: only little bit for demonstrative purposes - DON'T OVERENGINEER!!!!!!!):
 #   2a) focus on iterating between FEATURE ENGINEERING, FEATURE SELECTION, AND VALIDATION. - 'rhinking work' - "if I had all the data": in real life: what predicts store sales? gooGle! "need to understand what we are modelling in real life! business understanding!"
-#   2b) then grid search over most important hyperparameters  
+#   2b) then grid search over most important hyperparameters  #
 
 # LOAD DATASET(S)
 data_stores = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\store.csv", delimiter = ",")
