@@ -9,20 +9,6 @@ import seaborn as sns
 import math
 import graphviz
 
-# NOTES or project presentation (e.g. blog, CV, ...):
-# emphasize that focus here, since dataset was mostly given, was on modelling, i.e. testing out and optimizing XGBoost.
-# However, make sure to keep write-up tone authoritative, rather than explorative. 
-# also emphasize: speciality of time-series prediction: seasonality! autocorrelation! means that preserving temporal patterns/'consecutiveness' (?)
-# is very important as it hold predictive power - means e.g. that randomized Cross Validation is harmful
-
-# END TO END GUIDANCE: https://www.youtube.com/watch?v=GrJP9FLV3FE
-# STRATEGY:
-# 1) GET BASIC XGBOOST MODEL TO RUN, compare to baseline: rule-of-thumb/heuristic forecast (prior year value + typical YOY-growth +/- extraordinary effects) 
-# OPTIMIZATION vielleicht komplett für später aufheben: 80/20!! Siehe Winner Description, Feature Engineering hat nur marginal das Modell verbessert.
-# Nur jetzt schon bzw. überhaupt in Optimierung gehen, wenn XGBoost den rule-of-thumb forecast (proxy für human store manager forecast) nicht knackt.
-# 2) Optimize (if at all: only little bit for demonstrative purposes - DON'T OVERENGINEER!!!!!!!):
-#   2a) focus on iterating between FEATURE ENGINEERING, FEATURE SELECTION, AND VALIDATION. - 'rhinking work' - "if I had all the data": in real life: what predicts store sales? gooGle! "need to understand what we are modelling in real life! business understanding!"
-#   2b) then grid search over most important hyperparameters  #
 
 # LOAD DATASET(S)
 data_stores = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\store.csv", delimiter = ",")
@@ -30,17 +16,8 @@ data_train = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documen
 ## 'Sales' column missing in following, goal is to predict: 
 data_test = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\test.csv", delimiter = ",")
 
+
 # EDA and CLEANING
-## "read up on XGBoost / regression tree requirements (regarding e.g. data type, normalization, variable distribution, missing values)"
-## XGBoost preprocessing requirements:
-## (X) no nans (in training data output variables) 
-## (X) numerical variables
-## (X) dummy-encode categorical input variables (label encoding will mislead XGBoost because interprets as ordinal relationship!)
-## (X) expects missing values to be represented as "0" (float type)
-## (X) normalize target variable: if distribution is skewed, tree nodes/thresholds will be higher > better accuracy for extremve value predictions, but bad on main bulk of data!
-##  no transformation of input variables required as decision tree models are insensitive to that
-
-
 ## EDA and CLEANING: training data
 ### get first impression of how data looks
 data_train.info()
@@ -137,7 +114,7 @@ for i in data_test.columns:
     data_test[i].dtype
 
 
-### for all columns ('Store', 'DayOfWeek', 'Date', 'Sales', 'Customers', 'Open', 'Promo', 'StateHoliday', 'SchoolHoliday'):
+### for all columns ('Store', 'DayOfWeek', 'Date', 'Sales', 'Customers', 'Open', 'Promo', 'StateHoliday', 'SchoolHoliday') - THIS IS ALL INFO WE HAVE AHEAD OF THE FORECASTED PERIOD:
 ### > inspect and potentially clean: data type (XGBoost requires numerical data), missing values (impute with numerical value or replace with 0 [XGBoost requirement])
 ### > no need to worry about outliers in predictor variables since decision tree models (such as XGBoost) handle them  well (b/c DTs care primarily about splits, not distances)
 
@@ -189,8 +166,7 @@ data_test['SchoolHoliday'].isna().sum()
 data_test['SchoolHoliday'].dtype
 
 
-
-## EDA and CLEANING: store data
+## EDA and CLEANING: store daa
 ## store data
 data_stores.info()
 data_stores.head()
@@ -263,15 +239,6 @@ data_stores.loc[data_stores['PromoInterval'] == 'Jan,Apr,Jul,Oct', 'PromoInterva
 data_stores.loc[data_stores['PromoInterval'] == 'Feb,May,Aug,Nov', 'PromoInterval'] = 'FebStart_Quart'
 data_stores.loc[data_stores['PromoInterval'] == 'Mar,Jun,Sept,Dec', 'PromoInterval'] = 'MarStart_Quart'
 data_stores = pd.get_dummies(data_stores, columns=['PromoInterval'], dummy_na=True)
-
-## "we learned from EDA... implications..."
-### initial observations about datasets:
-### - Sales column in test missing - this is the prediction goal! (6 weeks - 41088 rows, as also indicate by sample upoad file)
-### - Höchstwahrscheinlich findet die Ermittlung der Prognosegüte dann beim Upload statt
-### - time spans:
-### 	- training data: from 01.01.2013 to 31.07.2015
-### 	- test data: from 01.08.2015 to 17.09.2015
-### - I have on average around 1000 rows per each of the 1115 stores
 
 
 # MERGE STORE DATA
