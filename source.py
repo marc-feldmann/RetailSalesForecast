@@ -9,11 +9,13 @@ import seaborn as sns
 import math
 import graphviz
 
+
+
 # LOAD DATASET(S)
-data_stores = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\store.csv", delimiter = ",")
-data_train = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\train.csv", delimiter = ",")
+data_stores = pd.read_csv(filepath_or_buffer = "data/store.csv", delimiter = ",")
+data_train = pd.read_csv(filepath_or_buffer = "data/train.csv", delimiter = ",")
 ## 'Sales' column missing in following, goal is to predict: 
-data_test = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\test.csv", delimiter = ",")
+data_test = pd.read_csv(filepath_or_buffer = "data/test.csv", delimiter = ",")
 
 
 ## EDA and CLEANING: training data
