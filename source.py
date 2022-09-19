@@ -9,39 +9,11 @@ import seaborn as sns
 import math
 import graphviz
 
-
-### CHECK FOR INFORMATION LEAK ISSUE - see file INFORMATION LEAK ISSUE.txt ###
-
-# NOTES or project presentation (e.g. blog, CV, ...):
-# emphasize that focus here, since dataset was mostly given, was on modelling, i.e. testing out and optimizing XGBoost.
-# However, make sure to keep write-up tone authoritative, rather than explorative. 
-# also emphasize: speciality of time-series prediction: seasonality! autocorrelation! means that preserving temporal patterns/'consecutiveness' (?)
-# is very important as it hold predictive power - means e.g. that randomized Cross Validation is harmful
-
-# END TO END GUIDANCE: https://www.youtube.com/watch?v=GrJP9FLV3FE
-# STRATEGY:
-# 1) GET BASIC XGBOOST MODEL TO RUN, compare to baseline: rule-of-thumb/heuristic forecast (prior year value + typical YOY-growth +/- extraordinary effects) 
-# OPTIMIZATION vielleicht komplett für später aufheben: 80/20!! Siehe Winner Description, Feature Engineering hat nur marginal das Modell verbessert.
-# Nur jetzt schon bzw. überhaupt in Optimierung gehen, wenn XGBoost den rule-of-thumb forecast (proxy für human store manager forecast) nicht knackt.
-# 2) Optimize (if at all: only little bit for demonstrative purposes - DON'T OVERENGINEER!!!!!!!):
-#   2a) focus on iterating between FEATURE ENGINEERING, FEATURE SELECTION, AND VALIDATION. - 'rhinking work' - "if I had all the data": in real life: what predicts store sales? gooGle! "need to understand what we are modelling in real life! business understanding!"
-#   2b) then grid search over most important hyperparameters  
-
 # LOAD DATASET(S)
 data_stores = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\store.csv", delimiter = ",")
 data_train = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\train.csv", delimiter = ",")
 ## 'Sales' column missing in following, goal is to predict: 
 data_test = pd.read_csv(filepath_or_buffer = "C:\\Users\\marc.feldmann\\Documents\\data_science_local\\RSP\\test.csv", delimiter = ",")
-
-# EDA and CLEANING
-## "read up on XGBoost / regression tree requirements (regarding e.g. data type, normalization, variable distribution, missing values)"
-## XGBoost preprocessing requirements:
-## (X) no nans (in training data output variables) 
-## (X) numerical variables
-## (X) dummy-encode categorical input variables (label encoding will mislead XGBoost because interprets as ordinal relationship!)
-## (X) expects missing values to be represented as "0" (float type)
-## (X) normalize target variable: if distribution is skewed, tree nodes/thresholds will be higher > better accuracy for extremve value predictions, but bad on main bulk of data!
-##  no transformation of input variables required as decision tree models are insensitive to that
 
 
 ## EDA and CLEANING: training data
@@ -267,8 +239,7 @@ data_stores.loc[data_stores['PromoInterval'] == 'Feb,May,Aug,Nov', 'PromoInterva
 data_stores.loc[data_stores['PromoInterval'] == 'Mar,Jun,Sept,Dec', 'PromoInterval'] = 'MarStart_Quart'
 data_stores = pd.get_dummies(data_stores, columns=['PromoInterval'], dummy_na=True)
 
-## "we learned from EDA... implications..."
-### initial observations about datasets:
+## Key EDA insights:
 ### - Sales column in test missing - this is the prediction goal! (6 weeks - 41088 rows, as also indicate by sample upoad file)
 ### - Höchstwahrscheinlich findet die Ermittlung der Prognosegüte dann beim Upload statt
 ### - time spans:
@@ -285,17 +256,13 @@ data_test = pd.merge(data_test, data_stores, how='left')
 
 
 # MODEL TRAINING
-## (NOTE: If training and test data split had not been done already, and if we were building a classification instead of regression tree,
-## we would here use 'stratified' splitting to maintain the 'balance' (a word for distribution of categorical variables)
-## of the prediction target variable that exists in the overall data set also in the training and test sets)    
-
 ## HOLDOUT set creation:
 ### XGBoost is a machine learning model where learning happens via gradient descend: thus requires some
 ### unbiased data to be able to assess after each training iteration whether is is 'going' into the right direction (= 'learning'), that is, minimizing error
 ### To create holdout set, normally would randomly split data into training and test set. XGBoost can even do that automatically via its 'cv' parameter.
 ### However, we need to be mindful that we are working with time series data. Randomized test/train-splitting will most likely 
 ### compromise endogenous, temporal patterns existing in the data that are important for prediction.
-### Will thus create holdout set manually, in followin manner: 
+### Will thus create holdout set manually, in following manner: 
 ### Normally, since six consecutive weeks of data to predict, would use the same six weeks from the prior year as holdout set.
 ### However, this might, again, tear apart any possible temporal patterns that might have predictive power and might thus
 ### be important to catch in model training. Thus will instead used the six weeks directly before the predicted six weeks (in other words,
@@ -309,26 +276,11 @@ min(data_train['Date']), max(data_train['Date']), data_train['Date'].shape
 min(data_holdout['Date']), max(data_holdout['Date']), data_test['Date'].shape
 
 ## MODEL evaluation: create RMSPE scoring function
-## "predt" = Vektor mit den vom Modell produzierten (log-transformierten) Vorhersagen/predictions per Store per Day für das Holdout Set
-## "dtrain" = data_holdout as DMatrix inklusive der tatsächlich observed target values (the actual 'right' values = "labels"); die Info was das "label" ist ist in der DMatrix als Metainfo gespeichert
-# def rmspe(predt, dtrain):
-#     "Root mean squared percetage error (RMSPE):"
-#     labels = dtrain.get_label()
-#     y = [math.exp(x)-1 for x in labels[labels > 0]]
-#     yhat = [math.exp(x)-1 for x in predt[labels > 0]]
-#     ssquare = [math.pow((y[i] - yhat[i])/y[i],2) for i in range(len(y))]
-#     return 'RMSPE = ', math.sqrt(np.mean(ssquare))
-
 def ToWeight(y):
     w = np.zeros(y.shape, dtype=float)
     ind = y != 0
     w[ind] = 1./(y[ind]**2)
     return w
-
-# def rmspe(yhat, y):
-#     w = ToWeight(y)
-#     rmspe = np.sqrt(np.mean( w * (y - yhat)**2 ))
-#     return rmspe
 
 def rmspe_xg(yhat, y):
     y = y.get_label()
@@ -338,9 +290,7 @@ def rmspe_xg(yhat, y):
     rmspe = np.sqrt(np.mean(w * (y - yhat)**2))
     return "rmspe", rmspe
 
-
 ## Fitting XGBoost regression model:
-#### it seem XGBoost is in some way integrated with sklearn: https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.sklearn
 # vstack to create proper dimensionality to feed into DMatrix
 # log Sales both to normalize distribution (right-skewed) and prevent overflow errors in RMSPE expoential operations; log(x+1) to prevent log(0) infinity
 
@@ -369,7 +319,6 @@ dtest= xgb.DMatrix(
 
 
 ## preliminary model
-### ***CHECK LATER***: have I taken the zeros out for training?
 params = {
     'objective': 'reg:squarederror',
     'disable_default_eval_metric': True
@@ -387,7 +336,6 @@ model = xgb.train(
 )
 
 # EVALUATE PRELIMINARY MODEL on holdout set
-## (NOTE: normally would use a self-generated test dataset for this)
 
 # make predictions for holdout data
 y_holdout_pred = model.predict(dholdout)
@@ -426,23 +374,3 @@ submission = pd.DataFrame(data_test['Id'])
 submission = submission.join(y_test_pred)
 submission = submission.rename(columns={0: 'Sales'})
 submission.to_csv('submission.csv', index=False)
-
-
-# MODEL OPTIMIZATION
-## - online gibt es gezielte Listen und Tutorials, was man in welcher Reihenfogle optimieren sollte: e.g. https://www.geeksforgeeks.org/xgboost/ or https://machinelearningmastery.com/extreme-gradient-boosting-ensemble-in-python/
-## - auch: missing value: statt null mal mean/median versuchen
-## - feature selection based on feature importance: https://machinelearningmastery.com/feature-importance-and-feature-selection-with-xgboost-in-python/
-## - what else
-
-
-
-
-
-# ---------------------------------- #
-
-
-
-## what coiunts as "highly accurate forecasting": https://plos.figshare.com/articles/dataset/_Criteria_of_MAPE_and_RMSPE_/1560669
-
-# VISUALIZATION
-
