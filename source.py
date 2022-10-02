@@ -360,6 +360,16 @@ model = xgb.train(
     evals_result=results
 )
 
+# plot last tree
+fig, ax = plt.subplots(figsize=(30, 30))
+xgb.plot_tree(model, num_trees=197, rankdir="LR", ax=ax)
+plt.show()
+
+xgb.plot_tree(model, num_trees=197, rankdir="LR")
+fig = plt.gcf()
+fig.set_size_inches(150, 100)
+fig.savefig('tree.png')
+
 # EVALUATE PRELIMINARY MODEL on holdout set
 
 # make predictions for holdout data
