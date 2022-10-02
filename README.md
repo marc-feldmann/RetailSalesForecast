@@ -5,7 +5,7 @@ For each Rossmann store, and each day six weeks ahead, 85% mean forecasting accu
 
 ![XGBoost_ModelEvaluation](https://user-images.githubusercontent.com/97337456/193450433-5da6d3ee-3a32-4fe4-81e8-a7c0ef5cc172.png)
 
-The final tree (after last boost):
+The final tree after last boost (click to enlarge):
 
 ![LastTree](https://user-images.githubusercontent.com/97337456/193451074-ff79ea74-8103-44a8-ab29-44de05880ad9.png)
 
