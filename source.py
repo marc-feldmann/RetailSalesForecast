@@ -277,6 +277,8 @@ data_train.info()
 data_train = pd.merge(data_train, data_stores, how='left')
 data_test = pd.merge(data_test, data_stores, how='left')
 
+data_train.to_csv("data_train_preprocessed.csv")
+data_stores.to_csv("data_stores_preprocessed.csv")
 
 # MODEL TRAINING
 ## HOLDOUT set creation:
