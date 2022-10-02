@@ -1,27 +1,49 @@
-from unittest import TestResult
 import pandas as pd
 import numpy as np
 import numpy.ma as ma
 import xgboost as xgb
-from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 import math
-import graphviz
+import mysql.connector
+from dotenv import load_dotenv, find_dotenv
+import os
 
+# LOAD DATASET(S) from AWS RDS MySQL instance
+load_dotenv()
+db = mysql.connector.connect(
+  host=os.getenv('aws_db2_host'),
+  user=os.getenv('aws_db2_username'),
+  password=os.getenv('aws_db2_password'),
+  database="RetailStoreSales",
+)
+cursor = db.cursor()
 
+cursor.execute("SELECT * FROM store")
+data_stores_sql = cursor.fetchall()
+columns = [i[0] for i in cursor.description]
+data_stores = pd.DataFrame(data_stores, columns=columns)
 
-# LOAD DATASET(S)
-data_stores = pd.read_csv(filepath_or_buffer = "data/store.csv", delimiter = ",")
-data_train = pd.read_csv(filepath_or_buffer = "data/train.csv", delimiter = ",")
+cursor.execute("SELECT * FROM test")
+data_test_sql = cursor.fetchall()
+columns = [i[0] for i in cursor.description]
+data_test = pd.DataFrame(data_test_sql, columns=columns)
+
+cursor.execute("SELECT * FROM train")
+data_train_sql = cursor.fetchall()
+columns = [i[0] for i in cursor.description]
+data_train = pd.DataFrame(data_train_sql, columns=columns)
+
+# for loading from local drive
+# data_stores = pd.read_csv(filepath_or_buffer = "data/store.csv", delimiter = ",")
+# data_train = pd.read_csv(filepath_or_buffer = "data/train.csv", delimiter = ",")
 ## 'Sales' column missing in following, goal is to predict: 
-data_test = pd.read_csv(filepath_or_buffer = "data/test.csv", delimiter = ",")
-
+# data_test = pd.read_csv(filepath_or_buffer = "data/test.csv", delimiter = ",")
 
 ## EDA and CLEANING: training data
 ### get first impression of how data looks
 data_train.info()
-data_train[12267:12300]
+data_train.sample(30)
 
 for i in data_train.columns:
     print("Value distribution in column '", i, "':")
