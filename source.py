@@ -22,7 +22,7 @@ cursor = db.cursor()
 cursor.execute("SELECT * FROM store")
 data_stores_sql = cursor.fetchall()
 columns = [i[0] for i in cursor.description]
-data_stores = pd.DataFrame(data_stores, columns=columns)
+data_stores = pd.DataFrame(data_stores_sql, columns=columns)
 
 cursor.execute("SELECT * FROM test")
 data_test_sql = cursor.fetchall()
@@ -34,7 +34,7 @@ data_train_sql = cursor.fetchall()
 columns = [i[0] for i in cursor.description]
 data_train = pd.DataFrame(data_train_sql, columns=columns)
 
-# for loading from local drive
+# --- Alternative Data Load From Local Drive ---
 # data_stores = pd.read_csv(filepath_or_buffer = "data/store.csv", delimiter = ",")
 # data_train = pd.read_csv(filepath_or_buffer = "data/train.csv", delimiter = ",")
 ## 'Sales' column missing in following, goal is to predict: 
@@ -127,7 +127,7 @@ data_train['SchoolHoliday'].dtype
 ## EDA and CLEANING: test data
 ### get first impression of how data looks
 data_test.info()
-data_test[12267:12300]
+data_test.sample(30)
 
 for i in data_test.columns:
     print("Value distribution in column '", i, "':")
@@ -263,9 +263,8 @@ data_stores.loc[data_stores['PromoInterval'] == 'Feb,May,Aug,Nov', 'PromoInterva
 data_stores.loc[data_stores['PromoInterval'] == 'Mar,Jun,Sept,Dec', 'PromoInterval'] = 'MarStart_Quart'
 data_stores = pd.get_dummies(data_stores, columns=['PromoInterval'], dummy_na=True)
 
-## Key EDA insights:
+## Some EDA insights:
 ### - Sales column in test missing - this is the prediction goal! (6 weeks - 41088 rows, as also indicate by sample upoad file)
-### - Höchstwahrscheinlich findet die Ermittlung der Prognosegüte dann beim Upload statt
 ### - time spans:
 ### 	- training data: from 01.01.2013 to 31.07.2015
 ### 	- test data: from 01.08.2015 to 17.09.2015
@@ -316,10 +315,12 @@ def rmspe_xg(yhat, y):
 
 ## Fitting XGBoost regression model:
 # vstack to create proper dimensionality to feed into DMatrix
-# log Sales both to normalize distribution (right-skewed) and prevent overflow errors in RMSPE expoential operations; log(x+1) to prevent log(0) infinity
+# log Sales both to normalize distribution (right-skewed) and prevent overflow errors in RMSPE exponential operations; log(x+1) to prevent log(0) infinity
 
 data_train = data_train[data_train['Sales'] > 0]
 data_holdout = data_holdout[data_holdout['Sales'] > 0]
+
+data_train.info()
 
 X_train, y_train = data_train.drop(columns=['Sales', 'Date', 'Customers', 'StateHoliday_b', 'StateHoliday_c']), np.vstack(data_train['Sales'])
 dtrain = xgb.DMatrix(
@@ -387,14 +388,13 @@ plt.title('XGBoost RMSPE')
 plt.show()
 
 
-# PREDICTION: create submission file (test data)
-
+# PREDICTION: create submission file (test data) for Kaggle
 # make predictions for test data
-y_test_pred = model.predict(dtest)
-y_test_pred = [math.exp(y_hat) for y_hat in y_test_pred]
-y_test_pred = pd.DataFrame(y_test_pred)
-y_test_pred = y_test_pred.astype(int).astype(float)
-submission = pd.DataFrame(data_test['Id'])
-submission = submission.join(y_test_pred)
-submission = submission.rename(columns={0: 'Sales'})
-submission.to_csv('submission.csv', index=False)
+# y_test_pred = model.predict(dtest)
+# y_test_pred = [math.exp(y_hat) for y_hat in y_test_pred]
+# y_test_pred = pd.DataFrame(y_test_pred)
+# y_test_pred = y_test_pred.astype(int).astype(float)
+# submission = pd.DataFrame(data_test['Id'])
+# submission = submission.join(y_test_pred)
+# submission = submission.rename(columns={0: 'Sales'})
+# submission.to_csv('results/submission.csv', index=False)
