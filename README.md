@@ -1,5 +1,5 @@
 # RetailSalesForecast
-This project uses gradient boosted trees to predict Rossmann retail store sales in Germany six weeks ahead. It uses data containing daily sales of 1115 stores between 2013 and 2015.
+This project uses gradient boosted trees to predict Rossmann stores’ daily sales six weeks ahead. It uses AWS-hosted data containing daily sales of 1115 stores between 2013 and 2015. Visual EDA is performed in Tableau.
 
 For each Rossmann store, and each day six weeks ahead, 85% mean forecasting accuracy is achieved by the trained model. This is very close to model performance on holdout data:
 
