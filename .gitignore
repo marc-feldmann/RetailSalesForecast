@@ -2,5 +2,5 @@ archive/
 data/
 docs/
 results/*
-!results/.png
+!results/*.png
 *.env
