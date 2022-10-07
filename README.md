@@ -1,5 +1,5 @@
 # RetailSalesForecast
-This project uses gradient boosted trees to predict Rossmann stores’ daily sales six weeks ahead. It uses AWS-hosted data containing daily sales of 1115 stores between 2013 and 2015. Visual EDA is performed in Tableau (see "results).
+This project uses gradient boosted trees to predict Rossmann stores’ daily sales six weeks ahead. It uses AWS-hosted data containing daily sales of 1115 stores between 2013 and 2015. Visual EDA is performed in Tableau (see "results").
 
 Preview:
 
