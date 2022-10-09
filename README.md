@@ -3,7 +3,7 @@ This project uses gradient boosted trees to predict Rossmann stores’ daily sal
 
 Preview:
 
-![image](https://user-images.githubusercontent.com/97337456/194385586-f4f87895-37a2-48e4-a4cd-e83024ec5f75.png)
+![image](https://user-images.githubusercontent.com/97337456/194773019-d8201d3d-019a-4c40-88b4-10bc447be818.png)
 
 
 For each Rossmann store, and each day six weeks ahead, 85% mean forecasting accuracy is achieved by the trained model. This is very close to model performance on holdout data:
